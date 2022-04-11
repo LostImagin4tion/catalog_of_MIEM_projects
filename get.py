@@ -1,6 +1,5 @@
 import requests
 import json
-from pydantic import Required
 
 from config import settings
 
@@ -13,11 +12,11 @@ def all_projects() -> json:
     return response
 
 
-def project_link(project_id: Required[int]) -> str:
+def project_link(project_id: int) -> str:
     return f'https://cabinet.miem.hse.ru/#/project/{project_id}'
 
 
-def project_details(project_id: Required[int]) -> json:
+def project_details(project_id: int) -> json:
     response = requests.get(
         f'{settings.BASE_URL}/{settings.BASE_URL}/project/body/{project_id}'
     ).json()
@@ -25,7 +24,7 @@ def project_details(project_id: Required[int]) -> json:
     return response
 
 
-def project_vacancies(project_id: Required[int]) -> json:
+def project_vacancies(project_id: int) -> json:
     response = requests.get(
         f'{settings.BASE_URL}/{settings.BASE_URL}/project/vacancies/{project_id}'
     )
@@ -33,7 +32,7 @@ def project_vacancies(project_id: Required[int]) -> json:
     return response
 
 
-def project_team(project_id: Required[int]) -> json:
+def project_team(project_id: int) -> json:
     response = requests.get(
         f'{settings.BASE_URL}/{settings.BASE_URL}/project/{project_id}/team'
     )
