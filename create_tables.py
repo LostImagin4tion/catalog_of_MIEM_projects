@@ -14,7 +14,7 @@ engine = create_engine(settings.DB_PATH, pool_size=1000)
 
 # table with base project info
 class ProjectBasic(db):
-    __tablename__ = 'basic info'
+    __tablename__ = 'basic_info'
 
     id = Column(Integer, primary_key=True, unique=True)
     number = Column(Integer)
