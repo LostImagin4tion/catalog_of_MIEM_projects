@@ -1,74 +1,115 @@
+import json
 from tkinter import *
 from tkinter.ttk import *
 from PIL import ImageTk, Image
+from sqlalchemy import desc
+from sqlalchemy.orm import Session
+
+import entities
+from create_tables import engine, get_session, ProjectBasic, ProjectDetails
+import get
 
 
 class App:
-    def __init__(self, root):
+    def __init__(
+            self,
+            root: Tk,
+            session: Session
+    ):
+        self.session = session
+        self.all_projects = []
+
         self.root = root
         self.root.title('Каталог проектов')
 
-        self.projects_list = Listbox(selectmode=EXTENDED, height=15, width=60)
-        project_values = ['*Пример проекта*']
+        self.projects_list = Listbox(selectmode=EXTENDED, height=35, width=102)
 
-        for value in project_values:
-            self.projects_list.insert(END, value)
+        self.projects_list.place(x=20, y=110)
 
-        self.projects_list.place(x=9, y=110)
-        self.project_scroll = Scrollbar(command=self.projects_list.yview)
-        self.project_scroll.place(x=380, y=200)
-        self.projects_list.config(yscrollcommand=self.project_scroll.set)
+        self.project_scroll_vertical = Scrollbar(command=self.projects_list.yview)
+        self.project_scroll_vertical.place(x=617.4, y=112, height=560.25)
 
-        self.projects_list.bind('<<ListboxSelect>>', self.__on_click_projects_list())
+        self.project_scroll_horizontal = Scrollbar(command=self.projects_list.xview, orient='horizontal')
+        self.project_scroll_horizontal.place(x=22, y=655, width=595)
 
-        self.canvas = Canvas(self.root, width=400, height=400)
+        self.projects_list.config(
+            xscrollcommand=self.project_scroll_horizontal.set,
+            yscrollcommand=self.project_scroll_vertical.set
+        )
 
-        self.find_field = Entry(root, width=40)
-        self.find_field.insert(0, 'Введите номер, название или руководителя проекта')
-        self.find_field.grid(column=1, padx=15, pady=15, columnspan=5, row=0)
+        self.projects_list.bind('<<ListboxSelect>>')
 
-        self.mag = PhotoImage(file='drawables/ic_search.png')
-        self.find_button = Button(root, image=self.mag, command=self.__search())
-        self.find_button.grid(column=6, columnspan=1, row=0)
+        # self.canvas = Canvas(self.root, width=400, height=400)
 
-        self.update_img = PhotoImage(file='drawables/ic_update.png')
+        self.find_field = Entry(root, width=65)
+        self.find_field.insert(0, ' Введите номер, название или руководителя проекта')
+        self.find_field.place(x=65, y=15)
+
+        self.search_img = PhotoImage(file='drawables/ic_search.png', width=16, height=16)
+        self.search_button = Button(root, image=self.search_img, command=self.__search())
+        self.search_button.place(x=480, y=12)
+
+        self.update_img = PhotoImage(file='drawables/ic_update.png', width=16, height=16)
         self.update_button = Button(root, image=self.update_img, command=self.__update())
-        self.update_button.grid(column=7, columnspan=1, padx=10, row=0)
+        self.update_button.place(x=515, y=12)
 
-        self.export_img = PhotoImage(file='drawables/ic_export.png')
+        self.export_img = PhotoImage(file='drawables/ic_export.png', width=16, height=16)
         self.export_button = Button(root, image=self.export_img, command=self.__export())
-        self.export_button.grid(column=8, columnspan=1, row=0)
+        self.export_button.place(x=550, y=12)
 
-        self.sort_top = Label(root, text='Сортировать по:')
+        # sorting
+        self.sort_top = Label(root, text='Сортировать:')
+        self.sort_top.place(x=48, y=50)
 
         self.sort_value = Combobox(root, values=[
-            '*sort_cond1*',
-            '*sort_cond2*',
-            '*sort_cond3*',
-            '*sort_cond4*'
+            'По названию А-Я',
+            'По названию Я-А',
+            'По номеру 0-...',
+            'По номеру ...-0',
+            'По руководителю А-Я',
+            'По руководителю Я-А'
         ])
-
-        self.sort_top.grid(column=1, row=2)
-        self.sort_value.grid(column=1, row=3)
+        self.sort_value.place(x=20, y=70)
         self.sort_value.current(0)
 
-        self.filter_top = Label(root, text='Фильтр:')
-        self.filter_top.grid(column=3, row=2)
+        # project status filters
+        self.filter_top = Label(root, text='Cтатус:')
+        self.filter_top.place(x=235, y=50)
 
-        filter_values = ['*filter_cond*', '*filter_cond*', '*filter_cond*', '*filter_cond*', '*filter_cond*', 'filter_cond*']
-        self.filter_box = Listbox(selectmode=MULTIPLE, height=len(filter_values))
-        for value in filter_values:
-            self.filter_box.insert(END, value)
+        self.project_status_filters = Combobox(root, values=[
+            'Все',
+            'Готов к работе',
+            'Рабочий'
+        ])
+        self.project_status_filters.place(x=185, y=70)
+        self.project_status_filters.current(0)
 
-        self.filter_button = Button(root, text='Фильтровать по:', command=lambda: self.filter_box.place(x=160, y=90))
-        self.filter_button.place(x=160, y=65)
+        # project type filters
+        self.filter_top = Label(root, text='Тип:')
+        self.filter_top.place(x=395, y=50)
+        self.project_type_filters = Combobox(root, values=[
+            'Все',
+            'НИР',
+            'Программный',
+            'Прогр.-аппаратный',
+            'Стартап'
+        ])
+        self.project_type_filters.place(x=338, y=70)
+        self.project_type_filters.current(0)
 
-        self.hide_filters_button = Button(root, text='Скрыть фильтр', command=lambda: self.filter_box.place_forget())
-        self.hide_filters_button.place(x=260, y=65)
+        # project vacancies filters
+        self.filter_top = Label(root, text='По наличию вакансий:')
+        self.filter_top.place(x=495, y=50)
+        self.project_vacancies_filters = Combobox(root, values=[
+            'Все',
+            'Есть вакансии',
+            'Набор закрыт'
+        ])
+        self.project_vacancies_filters.place(x=490, y=70)
+        self.project_vacancies_filters.current(0)
 
-        # self.filter_box.place(x=170, y=65)
-        self.scroll = Scrollbar(command=self.filter_box.yview)
-        self.filter_box.config(yscrollcommand=self.scroll.set)
+        # setup projects list
+        self.__setup_projects()
 
     def __search(self):
         return 0
@@ -82,27 +123,77 @@ class App:
     def __export(self):
         return 0
 
-    def __on_click_projects_list(self, event):
+    def __setup_projects(self):
 
-        self.project_card_window = Toplevel(root)
-        self.project_card_window.geometry("400x400")
+        project_query = self.session.query(ProjectBasic)
 
-        self.back = Button(self.project_card_window, text='Назад', command=self.project_card_window.destroy)
-        self.back.place(relx=.7, rely=.8, relheight=.1, relwidth=.2)
+        if project_query.count():
+            for project in self.session.query(ProjectBasic):
 
-        self.project_card_window.title('Карточка проекта')
+                self.all_projects.append(entities.ProjectBasic(
+                    id=project.id,
+                    number=project.number,
+                    name=project.name,
+                    head=project.head,
+                    vacancies=project.vacancies,
+                    status=project.status,
+                    workers=project.team,
+                    image=project.image
+                ))
 
-        self.card_title = Label(self.project_card_window, text='Обложка проекта', font='Times 15')
+                project_number = project.number if project.number else project.id
+                project_info = f'#{project_number}    {project.name}    ({project.head})'
+                self.projects_list.insert(END, project_info)
+        else:
+            projects_response = get.all_projects()
+
+            for project in projects_response:
+
+                project_info = entities.ProjectBasic(
+                    id=project['id'],
+                    number=project['number'],
+                    name=project['nameRus'],
+                    head=project['head'],
+                    vacancies=project['vacancies'],
+                    status=project['statusDesc'],
+                    workers=len(get.project_team(project['id'])),
+                    image=project['thumbnail']
+                )
+                self.all_projects.append(project_info)
+
+                project_number = project_info.number if project_info.number else project_info.id
+                project_label = f'#{project_number}    {project_info.name}    ({project_info.head})'
+                self.projects_list.insert(END, project_label)
+
+                project_entry = ProjectBasic(
+                    id=project_info.id,
+                    number=project_info.number,
+                    name=project_info.name,
+                    head=project_info.head,
+                    workers_amount=project_info.workers_number,
+                    vacancies=project_info.vacancies,
+                    status=project_info.status,
+                    image=project_info.image
+                )
+                self.session.add(project_entry)
+
+        self.session.commit()
+
+        return 0
+
+    def __on_click_projects_list(self, project_id):
+
+        self.card_title = Label(self.root, text='Обложка проекта', font='Times 15')
         self.card_title.place(relx=.2)
 
-        self.project_name = Label(self.project_card_window, text='*Название проекта*', font='Times 15')
+        self.project_name = Label(self.root, text='*Название проекта*', font='Times 15')
         self.project_name.place(relx=.2, y=30)
 
-        self.project_number = Label(self.project_card_window, text='№*num*', font='Times 15')
+        self.project_number = Label(self.root, text='№*num*', font='Times 15')
         self.project_number.place(relx=.7, y=15)
 
         self.vacancies_number = Label(
-            self.project_card_window,
+            self.root,
             text='*num_of_vac*\n свободных вакансий',
             borderwidth=2,
             relief="groove",
@@ -111,7 +202,7 @@ class App:
         self.vacancies_number.place(relx=.05, rely=.25)
 
         self.project_status = Label(
-            self.project_card_window,
+            self.root,
             text='*status*',
             borderwidth=2,
             relief='groove',
@@ -120,26 +211,26 @@ class App:
         self.project_status.place(relx=.05, rely=.4)
 
         self.project_head_title = Label(
-            self.project_card_window,
+            self.root,
             text='Руководитель:',
             font='Times 15'
         )
         self.project_head_title.place(x=10, rely=.6)
 
-        self.project_head_name = Label(self.project_card_window, text='*name*:', font='Times 13')
+        self.project_head_name = Label(self.root, text='*name*:', font='Times 13')
         self.project_head_name.place(x=20, rely=.65)
 
-        self.project_type_title = Label(self.project_card_window, text='Тип:', font='Times 15')
+        self.project_type_title = Label(self.root, text='Тип:', font='Times 15')
         self.project_type_title.place(x=10, rely=.75)
 
-        self.project_type = Label(self.project_card_window, text='*type*:', font='Times 13')
+        self.project_type = Label(self.root, text='*type*:', font='Times 13')
         self.project_type.place(x=20, rely=.80)
 
-        self.about_button = Button(self.project_card_window, text='Подробнее', command=self.__about_project())
+        self.about_button = Button(self.root, text='Подробнее', command=self.__about_project())
         self.about_button.place(relx=.7, rely=.65, relheight=.1, relwidth=.2)
 
     def __about_project(self):
-        self.about_window = Toplevel(self.project_card_window)
+        self.about_window = Toplevel(self.root)
         self.about_window.geometry('400x400')
         self.about_window.title('Подробнее')
 
@@ -254,6 +345,6 @@ class App:
 
 
 root = Tk()
-root.geometry("400x400")
-app = App(root)
+root.geometry("1280x720")
+app = App(root=root, session=get_session(engine))
 root.mainloop()

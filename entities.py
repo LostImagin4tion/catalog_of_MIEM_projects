@@ -1,21 +1,23 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 
 class ProjectBasic:
     def __init__(
             self,
             id: Optional[int],
+            name: Optional[str],
             head: Optional[str],
-            workers: Optional[str],
-            vacancies: Optional[int],
             status: Optional[str],
+            workers: Optional[int] = None,
+            vacancies: Optional[int] = None,
             number: Optional[int] = None,
             image: Optional[str] = None
     ):
         self.id = id
         self.number = number
+        self.name = name
         self.head = head
-        self.workers_amount = workers
+        self.workers_number = workers
         self.vacancies = vacancies,
         self.status = status
         self.image = image
@@ -27,10 +29,15 @@ class ProjectDetails:
             id: Optional[str],
             name: Optional[str],
             head: Optional[str],
-            team: Optional[List[str]],
-            vacancies: Optional[List[str]],
+            team: Optional[List[Dict[str, str]]],
+            vacancies: Optional[List[Dict[str, str]]],
             status: Optional[str],
+            type: Optional[List[str]],
             years: Optional[List[str]],
+            link: Optional[str],
+            zulip_link: Optional[str] = None,
+            wiki_link: Optional[str] = None,
+            email: Optional[str] = None,
             image: Optional[str] = None,
             target: Optional[str] = None,
             annotation: Optional[str] = None,
@@ -52,8 +59,13 @@ class ProjectDetails:
         self.team = team
         self.vacancies = vacancies
         self.status = status
+        self.type = type
         self.years = years
         self.image = image
+        self.link = link
+        self.zulip = zulip_link
+        self.wiki = wiki_link
+        self.email = email
         self.target = target
         self.annotation = annotation
         self.results = results

@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.engine import Engine
 from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database, database_exists
 
 from config import settings
 
@@ -14,46 +15,50 @@ engine = create_engine(settings.DB_PATH, pool_size=1000)
 
 # table with base project info
 class ProjectBasic(db):
-    __tablename__ = 'basic_info'
+    __tablename__ = 'projects_basic_info'
 
     id = Column(Integer, primary_key=True, unique=True)
     number = Column(Integer)
-    name = Column(String)
-    head = Column(String)
+    name = Column(String(200))
+    head = Column(String(200))
     workers_amount = Column(Integer)
     vacancies = Column(Integer)
-    status = Column(String)
-    image = Column(String)
+    status = Column(String(200))
+    image = Column(String(200))
 
 
 # table with project details
 class ProjectDetails(db):
-    __tablename__ = 'details'
+    __tablename__ = 'projects_details'
 
     id = Column(Integer, primary_key=True, unique=True)
-    number = Column(Integer, unique=True)
-    name = Column(String)
-    head = Column(String)
-    team = Column(String)
-    status = Column(String)
-    target = Column(String)
-    annotation = Column(String)
-    results = Column(String)
-    competency = Column(String)
-    resources = Column(String)
-    control = Column(String)
-    result_form = Column(String)
-    background = Column(String)
-    customer = Column(String)
-    industry = Column(String)
-    organization = Column(String)
-    vacancies = Column(String)
-    years = Column(String)
-    image = Column(String)
+    name = Column(Text)
+    team = Column(Text)
+    vacancies = Column(Text)
+    years = Column(Text)
+    link = Column(Text)
+    wiki_link = Column(Text)
+    zulip_link = Column(Text)
+    email = Column(Text)
+    target = Column(Text)
+    annotation = Column(Text)
+    results = Column(Text)
+    competency = Column(Text)
+    resources = Column(Text)
+    control = Column(Text)
+    result_form = Column(Text)
+    background = Column(Text)
+    customer = Column(Text)
+    industry = Column(Text)
+    organization = Column(Text)
 
 
-# creating tables
+# creating database and tables
 def create_tables(engine: Engine) -> None:
+    print(f'Database exists: {database_exists(engine.url)}')
+    if not database_exists(settings.DB_PATH):
+        create_database(engine.url)
+        print(f'Database created: {database_exists(engine.url)}')
     db.metadata.create_all(engine)
 
 

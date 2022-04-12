@@ -5,7 +5,7 @@ from typing import Optional
 class Settings(BaseSettings):
     """ Instance stores all app settings, mainly environment variables """
 
-    BASE_URL = 'devcabinet.miem.vmnet.top'
+    BASE_URL = 'https://devcabinet.miem.vmnet.top'
     PUBLIC_API = 'public-api'
 
     DB_PATH: Optional[str]

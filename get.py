@@ -6,38 +6,46 @@ from config import settings
 
 def all_projects() -> json:
     response = requests.get(
-        f'{settings.BASE_URL}/{settings.BASE_URL}/projects'
+        f'{settings.BASE_URL}/{settings.PUBLIC_API}/projects'
     ).json()
 
-    return response
+    return response['data']
 
 
 def project_link(project_id: int) -> str:
     return f'https://cabinet.miem.hse.ru/#/project/{project_id}'
 
 
-def project_details(project_id: int) -> json:
+def project_basic_info(project_id: int) -> json:
     response = requests.get(
-        f'{settings.BASE_URL}/{settings.BASE_URL}/project/body/{project_id}'
+        f'{settings.BASE_URL}/{settings.PUBLIC_API}/public-api/project/header/{project_id}'
     ).json()
 
-    return response
+    return response['data']
+
+
+def project_details(project_id: int) -> json:
+    response = requests.get(
+        f'{settings.BASE_URL}/{settings.PUBLIC_API}/project/body/{project_id}'
+    ).json()
+
+    return response['data']
 
 
 def project_vacancies(project_id: int) -> json:
     response = requests.get(
-        f'{settings.BASE_URL}/{settings.BASE_URL}/project/vacancies/{project_id}'
-    )
+        f'{settings.BASE_URL}/{settings.PUBLIC_API}/project/vacancies/{project_id}'
+    ).json()
 
-    return response
+    return response['data']
 
 
 def project_team(project_id: int) -> json:
     response = requests.get(
-        f'{settings.BASE_URL}/{settings.BASE_URL}/project/{project_id}/team'
-    )
+        f'{settings.BASE_URL}/{settings.PUBLIC_API}/project/{project_id}/team'
+    ).json()
 
-    return response
+    return response['data']
 
 
 def userstories_stats() -> json:
