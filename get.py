@@ -18,7 +18,7 @@ def project_link(project_id: int) -> str:
 
 def project_basic_info(project_id: int) -> json:
     response = requests.get(
-        f'{settings.BASE_URL}/{settings.PUBLIC_API}/public-api/project/header/{project_id}'
+        f'{settings.BASE_URL}/{settings.PUBLIC_API}/project/header/{project_id}'
     ).json()
 
     return response['data']
@@ -28,7 +28,6 @@ def project_details(project_id: int) -> json:
     response = requests.get(
         f'{settings.BASE_URL}/{settings.PUBLIC_API}/project/body/{project_id}'
     ).json()
-
     return response['data']
 
 

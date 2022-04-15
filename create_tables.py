@@ -21,9 +21,9 @@ class ProjectBasic(db):
     number = Column(Integer)
     name = Column(String(200))
     head = Column(String(200))
-    workers_amount = Column(Integer)
     vacancies = Column(Integer)
     status = Column(String(200))
+    type = Column(String(200))
     image = Column(String(200))
 
 
@@ -35,7 +35,6 @@ class ProjectDetails(db):
     name = Column(Text)
     team = Column(Text)
     vacancies = Column(Text)
-    years = Column(Text)
     link = Column(Text)
     wiki_link = Column(Text)
     zulip_link = Column(Text)
@@ -64,13 +63,20 @@ def create_tables(engine: Engine) -> None:
 
 # creating session
 def get_session(engine: Engine) -> Session:
-    return sessionmaker(bind=engine)()
+    return sessionmaker(bind=engine, autoflush=False)()
 
 
 # Dropping the tables
-def delete_tables():
+def delete_tables() -> None:
     ProjectBasic.__table__.drop(engine)
     ProjectDetails.__table__.drop(engine)
+
+
+# Deleting all tables' content
+def truncate_tables() -> None:
+    session = get_session(engine)
+    session.query(ProjectBasic).delete()
+    session.query(ProjectDetails).delete()
 
 
 if __name__ == '__main__':

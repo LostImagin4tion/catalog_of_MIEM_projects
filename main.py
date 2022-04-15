@@ -6,7 +6,6 @@ import get
 import gui
 import filter
 import search
-from entities import ProjectBasic, ProjectDetails
 from create_tables import engine, get_session, ProjectBasic, ProjectDetails
 from config import settings
 
