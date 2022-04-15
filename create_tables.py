@@ -74,9 +74,8 @@ def delete_tables() -> None:
 
 # Deleting all tables' content
 def truncate_tables() -> None:
-    session = get_session(engine)
-    session.query(ProjectBasic).delete()
-    session.query(ProjectDetails).delete()
+    engine.execute('TRUNCATE TABLE projects_basic_info')
+    engine.execute('TRUNCATE TABLE projects_details')
 
 
 if __name__ == '__main__':

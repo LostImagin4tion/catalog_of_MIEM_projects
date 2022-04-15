@@ -1,16 +1,13 @@
-import base64
 import functools
-from typing import List, Dict
+import json
+from typing import List
 import win32api
-import io
-import urllib.request
 import webbrowser
 from tkinter import *
 from tkinter.ttk import *
 from PIL import ImageTk, Image
 from sqlalchemy.orm import Session
 from random import randint
-import requests
 
 import create_tables
 from create_tables import engine, get_session, ProjectBasic, ProjectDetails
@@ -20,11 +17,7 @@ import presenter
 
 
 class App:
-    def __init__(
-            self,
-            root: Tk,
-            session: Session
-    ):
+    def __init__(self, root: Tk, session: Session):
         self.session = session
         self.all_projects = []
         self.all_details = []
@@ -32,26 +25,27 @@ class App:
         self.root = root
         self.root.title('Каталог проектов')
 
-        self.projects_list = Frame(height=35, width=120)
+        self.projects_list = Listbox(selectmode=EXTENDED, height=36, width=101)
         self.projects_list.place(x=20, y=110)
-        self.canvas_container = Canvas(self.projects_list, height=590, width=608)
-        self.canvas_container.place(x=20, y=110)
-        self.frame_container = Frame(self.canvas_container)
-        self.frame_container.place(x=20, y=110)
+        self.projects_list.bind('<<ListboxSelect>>', self.__on_click_projects_list)
 
         self.project_scroll_vertical = Scrollbar(
-            self.projects_list,
+            self.root,
             orient='vertical',
-            command=self.canvas_container.yview
+            command=self.projects_list.yview
         )
-
         self.project_scroll_horizontal = Scrollbar(
-            self.projects_list,
+            self.root,
             orient='horizontal',
-            command=self.canvas_container.xview
+            command=self.projects_list.xview
         )
+        self.project_scroll_horizontal.place(x=22, y=690, width=605)
+        self.project_scroll_vertical.place(x=630, y=110, height=582)
 
-        self.canvas_container.create_window((20, 130), window=self.frame_container)
+        self.projects_list.config(
+            xscrollcommand=self.project_scroll_horizontal.set,
+            yscrollcommand=self.project_scroll_vertical.set
+        )
 
         self.find_field = Entry(root, width=65)
         self.find_field.insert(0, ' Введите номер, название или руководителя проекта')
@@ -60,10 +54,10 @@ class App:
             '<FocusIn>',
             lambda args: self.find_field.delete(0, END)
         )
-        self.find_field.bind(
-            '<FocusOut>',
-            lambda args: self.find_field.insert(0, ' Введите номер, название или руководителя проекта')
-        )
+        # self.find_field.bind(
+        #     '<FocusOut>',
+        #     lambda args: self.find_field.insert(0, ' Введите номер, название или руководителя проекта')
+        # )
 
         self.search_img = PhotoImage(file='drawables/ic_search.png', width=16, height=16)
         self.search_button = Button(root, image=self.search_img, command=functools.partial(self.__search))
@@ -160,95 +154,94 @@ class App:
         win32api.ShellExecute(0, 'open', f'mailto:{link}', None, None, 0)
 
     def __update(self, new_projects: List[ProjectBasic] = None):
+        self.projects_list.delete(0, END)
+
         if new_projects is None:
             create_tables.truncate_tables()
             self.all_projects = []
             self.__setup_projects()
+        else:
+            self.all_projects = new_projects,
+            self.__setup_projects(new_projects)
 
         return 0
 
     def __export(self) -> None:
         export.to_excel(self.all_projects, self.session)
 
-    def __setup_projects(self):
-        project_query = self.session.query(ProjectBasic)
+    def __setup_projects(self, new_projects: List[ProjectBasic] = None) -> int:
 
-        if project_query.count():
-            for project in self.session.query(ProjectBasic):
-
-                self.all_projects.append(ProjectBasic(
-                    id=project.id,
-                    number=project.number,
-                    name=project.name,
-                    head=project.head,
-                    vacancies=project.vacancies,
-                    status=project.status,
-                    type=project.type,
-                    image=project.image,
-                ))
-
+        if new_projects is not None:
+            for project in new_projects:
                 project_number = project.number if project.number else project.id
                 project_label = f'#{project_number}    {project.name}    ({project.head})'
-                project_button = Button(
-                    self.frame_container,
-                    text=project_label,
-                    command=functools.partial(self.__on_click_projects_list, project.id)
-                )
-                project_button.pack()
+                self.projects_list.insert(END, project_label)
         else:
-            projects_response = get.all_projects()
+            project_query = self.session.query(ProjectBasic)
 
-            for project in projects_response:
+            if project_query.count():
+                for project in self.session.query(ProjectBasic):
 
-                project_info = ProjectBasic(
-                    id=project['id'],
-                    number=project['number'],
-                    name=project['nameRus'],
-                    head=project['head'],
-                    vacancies=project['vacancies'],
-                    status=project['statusDesc'],
-                    type=project['typeDesc'],
-                    image=project['thumbnail']
-                )
-                self.all_projects.append(project_info)
+                    self.all_projects.append(ProjectBasic(
+                        id=project.id,
+                        number=project.number,
+                        name=project.name,
+                        head=project.head,
+                        vacancies=project.vacancies,
+                        status=project.status,
+                        type=project.type,
+                        image=project.image,
+                    ))
 
-                project_number = project_info.number if project_info.number else project_info.id
-                project_label = f'#{project_number}    {project_info.name}    ({project_info.head})'
-                project_button = Button(
-                    self.frame_container,
-                    text=project_label,
-                    command=functools.partial(self.__on_click_projects_list, project['id']),
-                )
-                project_button.pack()
+                    project_number = project.number if project.number else project.id
+                    project_label = f'#{project_number}    {project.name}    ({project.head})'
+                    self.projects_list.insert(END, project_label)
+            else:
+                projects_response = get.all_projects()
 
-                project_entry = ProjectBasic(
-                    id=project_info.id,
-                    number=project_info.number,
-                    name=project_info.name,
-                    head=project_info.head,
-                    vacancies=project_info.vacancies,
-                    status=project_info.status,
-                    type=project_info.type,
-                    image=project_info.image,
-                )
-                self.session.add(project_entry)
+                for project in projects_response:
 
-        self.frame_container.update()
-        self.canvas_container.configure(
-            xscrollcommand=self.project_scroll_horizontal.set,
-            yscrollcommand=self.project_scroll_vertical.set
-        )
-        self.canvas_container.pack(side=LEFT)
-        self.project_scroll_horizontal.place(x=0, y=580, width=612)
-        self.project_scroll_vertical.pack(side=RIGHT, fill=Y)
-        # self.project_scroll_horizontal.pack(side=BOTTOM, fill=X)
-        self.session.commit()
+                    project_info = ProjectBasic(
+                        id=project['id'],
+                        number=project['number'],
+                        name=project['nameRus'],
+                        head=project['head'],
+                        vacancies=project['vacancies'],
+                        status=project['statusDesc'],
+                        type=project['typeDesc'],
+                        image=project['thumbnail']
+                    )
+                    self.all_projects.append(project_info)
+
+                    project_number = project_info.number if project_info.number else project_info.id
+                    project_label = f'#{project_number}    {project_info.name}    ({project_info.head})'
+                    self.projects_list.insert(END, project_label)
+
+                    project_entry = ProjectBasic(
+                        id=project_info.id,
+                        number=project_info.number,
+                        name=project_info.name,
+                        head=project_info.head,
+                        vacancies=project_info.vacancies,
+                        status=project_info.status,
+                        type=project_info.type,
+                        image=project_info.image,
+                    )
+                    self.session.add(project_entry)
+
+            self.session.commit()
 
         return 0
 
-    def __on_click_projects_list(self, project_id: int):
+    def __on_click_projects_list(self, event):
 
-        if project_id:
+        self.selected_item = self.projects_list.curselection()
+        if not isinstance(self.all_projects, list):
+            self.all_projects = self.all_projects[0]
+
+        project_id = self.all_projects[self.selected_item[0]].id
+
+        if project_id is not None and isinstance(project_id, int):
             project_info = self.session.query(ProjectBasic).filter_by(id=project_id).first()
 
             if project_info:
@@ -256,16 +249,8 @@ class App:
                 self.project_card.geometry('450x700')
                 self.project_card.title('Карточка проекта')
 
-                self.thumbnail_url = project_info.image
-                if self.thumbnail_url is not None:
-                    self.url = f'https://cabinet.miem.hse.ru/project/thumbnail/{project_id}'
-                    self.raw_data = urllib.request.urlopen(self.url).read()
-                    self.img_data = base64.encodebytes(self.raw_data)
-                    self.img = PhotoImage(data=self.img_data)
-                else:
-                    index = randint(1, 4)
-                    self.img = PhotoImage(file=f'drawables/example{index}.png')
-
+                index = randint(1, 4)
+                self.img = PhotoImage(file=f'drawables/example{index}.png')
                 self.thumbnail = Label(self.project_card, image=self.img)
                 self.thumbnail.place(x=-5, y=0, width=455, height=100)
 
@@ -327,7 +312,7 @@ class App:
                 )
                 self.back.place(x=135, y=600, relheight=.1, relwidth=.4)
 
-    def __about_project(self, project_id):
+    def __about_project(self, project_id: int):
 
         if project_id:
             project_basic_info = self.session.query(ProjectBasic).filter_by(id=project_id).first()
@@ -361,7 +346,6 @@ class App:
                                                                         in project_details.keys() else None,
                     organization=project_details['organization']
                 )
-                self.session.add(project_full_info)
 
             self.about_window = Toplevel(self.project_card)
             self.about_window.geometry('500x800')

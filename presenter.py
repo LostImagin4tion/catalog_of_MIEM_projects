@@ -12,6 +12,14 @@ def perform_searching(
         entry: str,
         session: Session
 ) -> List[ProjectBasic]:
+    sort_to_int = {
+        'По названию А-Я': 0,
+        'По названию Я-А': 1,
+        'По номеру 0-...': 2,
+        'По номеру ...-0': 3,
+        'По руководителю А-Я': 4,
+        'По руководителю Я-А': 5
+    }
     status_to_api_status = {
         'Все': None,
         'Готов к работе': 'Готов к работе',
@@ -29,6 +37,7 @@ def perform_searching(
         'Есть вакансии': 1
     }
 
+    sort_value = sort_to_int[sort]
     status_value = status_to_api_status[status]
     type_value = type_to_api_type[type]
     vacancies_value = vacancies_to_int[vacancies]
@@ -37,6 +46,7 @@ def perform_searching(
         else entry
 
     db_projects = session.query(ProjectBasic)
+
     filtered_projects = []
     search_result = []
 
@@ -54,16 +64,32 @@ def perform_searching(
             filtered_projects = db_projects
         else:
             for project in db_projects:
-                if vacancies_value == 'Набор закрыт' and project.vacancies == 0:
+                if vacancies_value == 0 and project.vacancies == 0:
                     filtered_projects.append(project)
-                elif vacancies_value == 'Есть вакансии' and project.vacancies > 0:
+                elif vacancies_value == 1 and project.vacancies > 0:
                     filtered_projects.append(project)
 
-    if entry is None:
+    if entry is None or entry == '':
         search_result = filtered_projects
     else:
         for project in filtered_projects:
-            if project.number == entry or project.name == entry or project.head == entry:
+            print(f'{project.number} {project.name} {project.head}')
+            if str(project.number) == entry \
+                    or entry.lower() in project.name.lower() \
+                    or entry.lower() in project.head.lower():
                 search_result.append(project)
 
-    return search_result
+    all_projects = []
+    for project in search_result:
+        all_projects.append(ProjectBasic(
+            id=project.id,
+            number=project.number,
+            name=project.name,
+            head=project.head,
+            vacancies=project.vacancies,
+            status=project.status,
+            type=project.type,
+            image=project.image,
+        ))
+
+    return list(all_projects)
