@@ -1,7 +1,7 @@
 from typing import List
 from sqlalchemy.orm import Session
 
-from create_tables import ProjectBasic
+from scripts.create_tables import ProjectBasic
 
 
 def perform_searching(
@@ -73,7 +73,6 @@ def perform_searching(
         search_result = filtered_projects
     else:
         for project in filtered_projects:
-            print(f'{project.number} {project.name} {project.head}')
             if str(project.number) == entry \
                     or entry.lower() in project.name.lower() \
                     or entry.lower() in project.head.lower():
@@ -92,4 +91,4 @@ def perform_searching(
             image=project.image,
         ))
 
-    return list(all_projects)
+    return all_projects

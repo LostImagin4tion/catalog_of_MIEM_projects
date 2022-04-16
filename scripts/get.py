@@ -45,33 +45,3 @@ def project_team(project_id: int) -> json:
     ).json()
 
     return response['data']
-
-
-def userstories_stats() -> json:
-
-    headers = {
-        'content-type': 'application/json',
-        'x-disable-pagination': 'true'
-    }
-
-    taiga_response = requests.get(
-        'https://track.miem.hse.ru/api/v1/userstories?',
-        headers=headers
-    ).json()
-
-    return taiga_response
-
-
-def get_tasks_stats() -> json:
-
-    headers = {
-        'content-type': 'application/json',
-        'x-disable-pagination': 'true'
-    }
-
-    taiga_response = requests.get(
-        'https://track.miem.hse.ru/api/v1/tasks',
-        headers=headers
-    ).json()
-
-    return taiga_response

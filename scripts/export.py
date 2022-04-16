@@ -2,7 +2,7 @@ from typing import List, Dict
 from sqlalchemy.orm import Session
 import xlsxwriter
 
-from create_tables import ProjectBasic, ProjectDetails
+from scripts.create_tables import ProjectBasic
 
 
 def to_excel(
