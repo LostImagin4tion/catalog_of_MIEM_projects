@@ -55,26 +55,9 @@ class App:
         self.export_button = Button(root, image=self.export_img, command=functools.partial(self.__export))
         self.export_button.place(x=550, y=12)
 
-        # sorting
-        self.sort_top = Label(root, text='Сортировать:')
-        self.sort_top.place(x=48, y=50)
-
-        self.sort_value = Combobox(
-            root,
-            values=[
-                'По названию А-Я',
-                'По названию Я-А',
-                'По номеру 0-...',
-                'По номеру ...-0',
-                'По руководителю А-Я',
-                'По руководителю Я-А'],
-            state='readonly')
-        self.sort_value.place(x=20, y=70)
-        self.sort_value.current(0)
-
         # project status filters
         self.filter_top = Label(root, text='Cтатус:')
-        self.filter_top.place(x=235, y=50)
+        self.filter_top.place(x=135, y=50)
 
         self.project_status_filters = Combobox(
             root,
@@ -84,12 +67,12 @@ class App:
                 'Рабочий'],
             state='readonly'
         )
-        self.project_status_filters.place(x=185, y=70)
+        self.project_status_filters.place(x=85, y=70)
         self.project_status_filters.current(0)
 
         # project type filters
         self.filter_top = Label(root, text='Тип:')
-        self.filter_top.place(x=395, y=50)
+        self.filter_top.place(x=295, y=50)
         self.project_type_filters = Combobox(
             root,
             values=[
@@ -100,12 +83,12 @@ class App:
                 'Стартап'],
             state='readonly'
         )
-        self.project_type_filters.place(x=338, y=70)
+        self.project_type_filters.place(x=238, y=70)
         self.project_type_filters.current(0)
 
         # project vacancies filters
         self.filter_top = Label(root, text='По наличию вакансий:')
-        self.filter_top.place(x=495, y=50)
+        self.filter_top.place(x=395, y=50)
         self.project_vacancies_filters = Combobox(
             root,
             values=[
@@ -114,7 +97,7 @@ class App:
                 'Набор закрыт'],
             state='readonly'
         )
-        self.project_vacancies_filters.place(x=490, y=70)
+        self.project_vacancies_filters.place(x=390, y=70)
         self.project_vacancies_filters.current(0)
 
         # setup projects list
@@ -122,7 +105,6 @@ class App:
 
     def __search(self) -> None:
         self.all_projects = scripts.presenter.perform_searching(
-            self.sort_value.get(),
             self.project_status_filters.get(),
             self.project_type_filters.get(),
             self.project_vacancies_filters.get(),
@@ -151,7 +133,7 @@ class App:
             self.__setup_projects(new_projects)
 
     def __export(self) -> None:
-        scripts.export.to_excel(self.all_projects, self.session)
+        scripts.export.to_excel(self.all_projects)
 
     def __setup_projects(self, new_projects: List[ProjectBasic] = None) -> int:
 

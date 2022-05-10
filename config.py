@@ -1,5 +1,4 @@
 from pydantic import BaseSettings
-from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -8,14 +7,7 @@ class Settings(BaseSettings):
     BASE_URL = 'https://devcabinet.miem.vmnet.top'
     PUBLIC_API = 'public-api'
 
-    DB_PATH: Optional[str]
-
-    class Config:
-        env_file = r'C:\Users\user\PycharmProjects\pythonDed\.env'
-        env_file_encoding = 'utf-8'
-
-        # uncomment when testing
-        # env_prefix = 'TEST_' + env_prefix
+    DB_PATH = 'mysql+pymysql://root:admin@localhost/pythonProject?charset=utf8mb4'
 
 
 settings = Settings()

@@ -5,21 +5,12 @@ from scripts.create_tables import ProjectBasic
 
 
 def perform_searching(
-        sort: str,
         status: str,
         type: str,
         vacancies: str,
         entry: str,
         session: Session
 ) -> List[ProjectBasic]:
-    sort_to_int = {
-        'По названию А-Я': 0,
-        'По названию Я-А': 1,
-        'По номеру 0-...': 2,
-        'По номеру ...-0': 3,
-        'По руководителю А-Я': 4,
-        'По руководителю Я-А': 5
-    }
     status_to_api_status = {
         'Все': None,
         'Готов к работе': 'Готов к работе',
@@ -37,7 +28,6 @@ def perform_searching(
         'Есть вакансии': 1
     }
 
-    sort_value = sort_to_int[sort]
     status_value = status_to_api_status[status]
     type_value = type_to_api_type[type]
     vacancies_value = vacancies_to_int[vacancies]

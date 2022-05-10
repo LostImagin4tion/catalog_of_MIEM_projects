@@ -1,14 +1,11 @@
-from typing import List, Dict
-from sqlalchemy.orm import Session
+from typing import List
 import xlsxwriter
+import win32com.client as win32
 
 from scripts.create_tables import ProjectBasic
 
 
-def to_excel(
-        project_list: List[ProjectBasic],
-        session: Session
-) -> None:
+def to_excel(project_list: List[ProjectBasic]) -> None:
 
     workbook = xlsxwriter.Workbook('Отчёт о проектах МИЭМа.xlsx')
     basic_info_worksheet = workbook.add_worksheet('Базовая информация')
@@ -46,6 +43,7 @@ def to_excel(
     basic_info_worksheet.write(0, basic_col+6, 'Тип', header_cell_format)
     basic_info_worksheet.write(0, basic_col+7, 'Ссылка на обложку', header_cell_format)
 
+    basic_info_worksheet.set_column(0, 7, 20)
     for project in project_list:
 
         basic_info_worksheet.write(basic_row, basic_col, project.id, default_cell_format)
@@ -53,7 +51,7 @@ def to_excel(
         basic_info_worksheet.write(basic_row, basic_col+2, project.name, default_cell_format)
         basic_info_worksheet.write(basic_row, basic_col+3, project.head, default_cell_format)
         basic_info_worksheet.write(basic_row, basic_col+4, project.vacancies, default_cell_format)
-        basic_info_worksheet.write(basic_row, basic_col+5, project.vacancies, default_cell_format)
+        basic_info_worksheet.write(basic_row, basic_col+5, project.status, default_cell_format)
         basic_info_worksheet.write(basic_row, basic_col+6, project.type, default_cell_format)
         basic_info_worksheet.write(basic_row, basic_col+7, project.image, default_cell_format)
 

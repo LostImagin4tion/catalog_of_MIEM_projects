@@ -54,8 +54,9 @@ class ProjectDetails(db):
 
 # creating database and tables
 def create_tables(engine: Engine) -> None:
-    print(f'Database exists: {database_exists(engine.url)}')
-    if not database_exists(settings.DB_PATH):
+    if database_exists(settings.DB_PATH):
+        print(f'Database exists: {database_exists(engine.url)}')
+    else:
         create_database(engine.url)
         print(f'Database created: {database_exists(engine.url)}')
     db.metadata.create_all(engine)
